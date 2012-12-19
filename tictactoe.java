@@ -169,15 +169,6 @@ public class tictactoe{
 	* checkMoveAhead() the actual if statements to check steps ahead
 	* canWin() the actual if statements to check for Ai wins
 	*/
-
-	public int makeTheOffMove(int one, int two){
-		if(checkMove(one,two))
-			return one;
-		else if(checkMove(two,one))
-			return two;
-		else
-			return -1;
-	}
 	
 	public boolean checkOffensiveSpot(int one,int two, int three, int j){
 		if(board[j] == board[one] &&
