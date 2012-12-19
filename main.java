@@ -34,11 +34,12 @@ public class main{
 	System.out.println("Time to play Tic Tac Toe!");
 	System.out.println("You will play the first move, so you are 'X'");
 
-	while(!game.keepPlaying()){
-		game.printBoard();
-		game.makeMove();
-		game.Aimove();
-	}
+		while(game.keepPlaying()){
+			game.printBoard();
+			game.makeMove();
+			if(game.count != game.TURNS)
+				game.AiMove();
+		}
 
   }	
 

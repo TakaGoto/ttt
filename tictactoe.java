@@ -41,36 +41,22 @@ public class tictactoe{
 		return isEmpty;		
 	}
 		
-	/*for loop to check if the 2 out of 3 winning combination is
-	* filled and the last position is empty
-	* first two params are compared and the third has to be empty
-	*/
-
-	public boolean checkCombinations(int one, int two, int three){
-		if(board[one] == board[two] &&
-	       board[one] == player &&
-		   board[three] != computer)
-			return true;
-		else
-			return false;			
-	}
-
 	/*Check if game is over.
 	*if count = 9, board is filled and without a winner, its a draw.
-	*if isWinner is true, there is a winner.
-	*/
+	*if isWinner is true, there is a winner.*/
+
 	public boolean keepPlaying(){
-		boolean gameOver = false;
+		boolean gameOver = true;
 		String playAgain;
-		if(count >= TURNS){
+		if(count == TURNS){
 			printBoard();
 			System.out.println("SORRY! It's a draw!  Play again? (y/n)");
 			playAgain = s.next();
 			if(playAgain.toLowerCase().equals("n"))
-				gameOver = true;
+				gameOver = false;
 			else{
 				resetBoard();
-				gameOver = false;
+				gameOver = true;
 			} 		
 		}
 		else if(isWinner()){
@@ -81,10 +67,10 @@ public class tictactoe{
 			 System.out.println("you have won! play again? (y/n)");
 			playAgain = s.next();
 			if(playAgain.toLowerCase().equals("n"))
-				gameOver = true;
+				gameOver = false;
 			else{
 				resetBoard();
-				gameOver = false;
+				gameOver = true;
 			}
 		}	
 		return gameOver;
@@ -139,8 +125,7 @@ public class tictactoe{
 	public void makeMove(){
 		int move;
 		boolean moveOK = false;
-		
-		
+				
 		while(!moveOK){
 			System.out.println("Enter the number of where you want to make the move.");
 			move = s.nextInt();
@@ -157,39 +142,68 @@ public class tictactoe{
 		}
 	
 	}
+
 	/* AI initial moves
-	* 1. first priority is center
-	* 2. if player put center first
-	*	a. must put corner spot
-	* 3. if player doesnt put center
-	*   a. AI place center, AI must be careful of 2nd move.
-	*  
-	*/
+	* first priority is center, if the player put center first then put one of the four corners.*/
 		
 	public void initialAiMove(){
-		int computerMove = 0;
-		if(positionEmpty(CENTER)){
-			board[CENTER] = computer;
-			count++;
-		}
-		else{
-			for(int i = 0; i <= TURNS; i += 2){
-				if(i!=4)
-					if(positionEmpty(i))
-						computerMove = i;
+		int computerMove = -1;
+			if(positionEmpty(CENTER))
+				computerMove = CENTER;
+			else{
+				for(int i = 0; i <= TURNS; i += 2){
+					if(i!=4)
+						if(positionEmpty(i))
+							computerMove = i;
+				}
 			}
-			board[computerMove] = computer;
-			System.out.println("Make initial move on " + computerMove);
-			count++;
-		}
+		board[computerMove] = computer;
+		count++;	
 	}
 
-	/* Offensive AI move
-	* Only if player doesn't force computer to make a move
-	* to prevent player from winning
-	* Check if its a set up, otherwise safe to make offensive move.
+	/* Offensive AI moves
+	* AiWin() checks if Ai can win, first priority
+	* checkMove() checks if the first parameter is viable move
+	* makeOffensiveMove() the actual implementation of the move
+	* checkOffensiveSpot() checks if Ai can threaten for a win
+	* checkMoveAhead() the actual if statements to check steps ahead
+	* canWin() the actual if statements to check for Ai wins
 	*/
+
+	public int makeTheOffMove(int one, int two){
+		if(checkMove(one,two))
+			return one;
+		else if(checkMove(two,one))
+			return two;
+		else
+			return -1;
+	}
 	
+	public boolean checkOffensiveSpot(int one,int two, int three, int j){
+		if(board[j] == board[one] &&
+			 positionEmpty(two) && positionEmpty(three))
+				return true;
+		else
+			return false;
+	}
+
+	public boolean checkMoveAhead(int one, int two, int three, char[] checkBoard){
+		if(checkBoard[one] == checkBoard[two] &&
+			 checkBoard[one] == player && checkBoard[three] != computer)
+				return true;
+		else
+			return false;
+	}
+
+	public boolean canWin(int one, int two, int three){
+		if(board[one] == board[two] &&
+			 board[one] == computer &&
+			 board[three] != player)
+				return true;
+		else
+			return false;
+	}	
+
 	public int AiWin(){
 		int computerMove = -1;			
 		
@@ -199,75 +213,57 @@ public class tictactoe{
 			int winNumTwo = win[i][1];
 			int winNumThree = win[i][2];
 			
-			if(board[winNumOne] == board[winNumTwo] &&
-			   board[winNumOne] == computer &&
-			   board[winNumThree] != computer)
+			if(canWin(winNumOne,winNumTwo,winNumThree))
 				computerMove = winNumThree;
-			else if (board[winNumTwo] == board[winNumThree] &&
-					   board[winNumTwo] == computer && 
-					   board[winNumOne] != computer)	
+			else if(canWin(winNumTwo,winNumThree,winNumOne))	
 				computerMove = winNumOne;
-			else if (board[winNumOne] == board[winNumThree] &&
-					   board[winNumThree] == computer && 
-					   board[winNumTwo] != computer)
+			else if(canWin(winNumOne,winNumThree,winNumTwo))
 				computerMove = winNumTwo;
 		}
 		return computerMove;
 	}
 
 	public void makeOffensiveMove(){
-		int computerMove = 0;
+		int computerMove = -1;
 		if(AiWin() == -1){
-			System.out.println("Ai win is -1");
-				for(int j = 0; j < TURNS; j++){
-					if(board[j] == computer){
-						for(int i = 0; i < COMBINATIONS; i++){
-									
-							int winNumOne = win[i][0];
-							int winNumTwo = win[i][1];
-							int winNumThree = win[i][2];
-				
-							if(board[j] == board[winNumOne] &&
-								   positionEmpty(winNumTwo) &&
-								   positionEmpty(winNumThree)){
-							   if(checkMove(winNumThree,winNumTwo))
-									computerMove = winNumThree;
-							   else if(checkMove(winNumTwo,winNumThree))
-									computerMove = winNumTwo;
-							}
-							else if(board[j] == board[winNumTwo] &&
-									positionEmpty(winNumOne) &&
-									positionEmpty(winNumThree)){
-							   if(checkMove(winNumOne,winNumThree))
-									computerMove = winNumOne;
-							   else if(checkMove(winNumThree,winNumOne))
-									computerMove = winNumThree;	
-							}
-							else if(board[j] == board[winNumThree] &&
-									positionEmpty(winNumTwo) &&
-									positionEmpty(winNumOne)){
-							   if(checkMove(winNumTwo,winNumOne))
-									computerMove = winNumTwo;
-							   else if(checkMove(winNumOne,winNumTwo))
-									computerMove = winNumOne; 
-							}
+			for(int j = 0; j < TURNS; j++){
+				if(board[j] == computer){
+					for(int i = 0; i < COMBINATIONS; i++){
+								
+						int winNumOne = win[i][0];
+						int winNumTwo = win[i][1];
+						int winNumThree = win[i][2];
+			
+						if(checkOffensiveSpot(winNumOne,winNumTwo,winNumThree,j)){
+							 if(checkMove(winNumThree,winNumTwo))
+								computerMove = winNumThree;
+							 else if(checkMove(winNumTwo,winNumThree))
+								computerMove = winNumTwo;
+						}
+						else if(checkOffensiveSpot(winNumTwo,winNumOne,winNumThree,j)){
+							 if(checkMove(winNumOne,winNumThree))
+								computerMove = winNumOne;
+							 else if(checkMove(winNumThree,winNumOne))
+								computerMove = winNumThree;	
+						}
+						else if(checkOffensiveSpot(winNumThree,winNumTwo,winNumOne,j)){
+							 if(checkMove(winNumTwo,winNumOne))
+								computerMove = winNumTwo;
+							 else if(checkMove(winNumOne,winNumTwo))
+								computerMove = winNumOne; 
 						}
 					}
 				}
+			 }
 		}
-	  else if(AiWin() != -1){
-			System.out.println("Aiwin is not -1");
-			board[AiWin()] = computer;	
-	  }
-	  //If all fails, make random move for inevitable draw
-	  else if(computerMove == 0){
-		for(int k = 0; k < TURNS; k++){
-			if(positionEmpty(k))
-				computerMove = k;
-		}
-	  }
-	  
-	  System.out.println("Make Offensive Move on " + (computerMove));
+	  else if(AiWin() > -1)
+			computerMove = AiWin();
+	  else{
+			for(int k = 0; k < TURNS; k++){
+				if(positionEmpty(k))
+					computerMove = k;
+			}
+	  } 
 	  board[computerMove] = computer;
 	  count++;
 	}
@@ -277,15 +273,13 @@ public class tictactoe{
 	*/
 
 	public boolean checkMove(int compPos, int playerPos){
-		//if count > 2, then cannot do.
 		int c = 0;
-		//making replica of board
+		
 		char tempBoard[] = new char[]{'1','2','3','4','5','6','7','8','9'};
 
-		for(int j = 0; j < TURNS; j++){
+		for(int j = 0; j < TURNS; j++)
 			tempBoard[j] = board[j];
-		}
-
+		
 		tempBoard[compPos] = computer;
 		tempBoard[playerPos] = player;
 		
@@ -295,64 +289,51 @@ public class tictactoe{
 			int winNumTwo = win[i][1];
 			int winNumThree = win[i][2];
 		
-			if(tempBoard[winNumOne] == tempBoard[winNumTwo] &&
-			   tempBoard[winNumOne] == player &&
-			   tempBoard[winNumThree] != computer)
+			if(checkMoveAhead(winNumOne,winNumTwo,winNumThree,tempBoard))
 							c++;
-			else if (tempBoard[winNumTwo] == tempBoard[winNumThree] &&
-					   tempBoard[winNumTwo] == player && 
-					   tempBoard[winNumOne] != computer)	
+			else if (checkMoveAhead(winNumTwo,winNumThree,winNumOne,tempBoard))	
 							c++;
-			else if (tempBoard[winNumOne] == tempBoard[winNumThree] &&
-					   tempBoard[winNumThree] == player && 
-					   tempBoard[winNumTwo] != computer)	
+			else if (checkMoveAhead(winNumOne,winNumThree,winNumTwo,tempBoard))	
 							c++;
 		}
-	//reset possible move
-	if(c >= 2){
-		return false;
-	}
-	else{
-		return true;
-	}
-  }
+		if(c >= 2)
+			return false;
+		else
+			return true;
+ }
 
-
-
-
-
-
-
-	/* Defensive Move
-	* 
+	/* Defensive Moves
+	* makeDefensivemove() actual implemention of defensive move
+	* checkThreat() can't do defensive move if this isn't true.  checks for any possible wins by player
+	* checkCombinations() the if statement used to check the winning combination 
 	*/
 
-	public boolean makeDefensiveMove(){
-		boolean forced = false;
-		int computerMove = 0;	
+	public boolean checkCombinations(int one, int two, int three){
+		if(board[one] == board[two] &&
+	       board[one] == player &&
+		   board[three] != computer)
+			return true;
+		else
+			return false;			
+	}
+	
+	public void makeDefensiveMove(){
+		int computerMove = -1;	
 		for(int i = 0; i < COMBINATIONS; i++){
 			
 			int winNumOne = win[i][0];
 			int winNumTwo = win[i][1];
 			int winNumThree = win[i][2];
 		
-			if(checkCombinations(winNumOne,winNumTwo,winNumThree)){
+			if(checkCombinations(winNumOne,winNumTwo,winNumThree))
 				computerMove = winNumThree;
-				forced = true;
-			}
-			else if (checkCombinations(winNumTwo,winNumThree,winNumOne)){	
+			else if (checkCombinations(winNumTwo,winNumThree,winNumOne))
 				computerMove = winNumOne;
-				forced = true;
-			}
-			else if (checkCombinations(winNumOne,winNumThree,winNumTwo)){	
+			else if (checkCombinations(winNumOne,winNumThree,winNumTwo))	
 				computerMove = winNumTwo;
-				forced = true;
-			}
 		}
-		System.out.println("Computer has made a defensive move on " + computerMove);
 		board[computerMove] = computer;
 		count++;
-		return forced;
 	}
 
 	public boolean checkThreat(){
@@ -375,16 +356,17 @@ public class tictactoe{
 	return threat;
   }
 
+	/* Ai move */
 
-	
-	/* Ai move
-	*/
-
-	public void Aimove(){
+	public void AiMove(){
 		if(count < 3)
 			initialAiMove();
-		else if(checkThreat())
-			makeDefensiveMove();
+		else if(checkThreat()){
+			if(AiWin() > -1)
+				makeOffensiveMove();
+			else
+				makeDefensiveMove();
+		}
 		else
 			makeOffensiveMove(); 	
 	}
